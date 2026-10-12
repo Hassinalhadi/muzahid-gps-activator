@@ -15,4 +15,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "muzahid-gps-activator"
 include(":app")
-include(":keygen")

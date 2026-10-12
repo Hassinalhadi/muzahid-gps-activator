@@ -3,7 +3,6 @@ package dev.muzahid.activator
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
-import android.net.Uri
 import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
@@ -13,29 +12,13 @@ class HookEntry : XposedModule() {
 
     override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam) {
         if (param.packageName != "com.muzahid.gps") return
-        if (!isLicenseActive(param.classLoader)) return
         hookMuzahidLifecycle()
     }
 
     override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
         if (param.packageName != "com.muzahid.gps") return
-        if (!isLicenseActive(param.classLoader)) return
         val cl = param.classLoader ?: return
         hookMuzahidGps(cl)
-    }
-
-    private fun isLicenseActive(classLoader: ClassLoader?): Boolean {
-        return try {
-            val context = classLoader?.loadClass("android.app.ActivityThread")
-                ?.getDeclaredMethod("currentApplication")?.invoke(null) as? Context ?: return false
-            val result = context.contentResolver.call(
-                Uri.parse("content://dev.muzahid.activator.XposedService"),
-                "license_active", null, null
-            )
-            result?.getBoolean("license_active", false) == true
-        } catch (_: Throwable) {
-            false
-        }
     }
 
     private fun hookMuzahidLifecycle() {
