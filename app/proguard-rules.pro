@@ -1,0 +1,2 @@
+-keep class dev.muzahid.activator.** { *; }
+-keep class io.github.libxposed.** { *; }

@@ -1,0 +1,82 @@
+name: Build MUZAHID GPS Activator APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release Activator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+          cache-disabled: true
+
+      - name: Configure AndroidX & Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zipalign apksigner zip
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.nonTransitiveRClass=true" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> gradle.properties
+
+      - name: Build APK with Gradle
+        run: gradle assembleRelease --stacktrace || gradle assembleDebug --stacktrace
+
+      - name: Inject Xposed Metadata & Sign APK
+        run: |
+          APK_FOUND=$(find app/build/outputs/apk/ -name "*.apk" | head -n 1)
+          if [ -z "$APK_FOUND" ]; then
+            echo "Error: No APK found after build!"
+            exit 1
+          fi
+          echo "Found built APK: $APK_FOUND"
+
+          keytool -genkeypair -v -keystore release.keystore -alias activator_key             -keyalg RSA -keysize 2048 -validity 10000             -storepass "muzahid123" -keypass "muzahid123"             -dname "CN=MuzahidActivator, OU=VIP, O=Muzahid, L=Riyadh, C=SA"
+
+          zipalign -v -p 4 "$APK_FOUND" aligned.apk || cp "$APK_FOUND" aligned.apk
+
+          apksigner sign --ks release.keystore             --ks-pass pass:"muzahid123"             --key-pass pass:"muzahid123"             --ks-key-alias activator_key             --out Muzahid-GPS-Activator-VIP.apk aligned.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Muzahid-GPS-Activator-APK
+          path: |
+            Muzahid-GPS-Activator-VIP.apk
+            MUZAHID GPS_2.0.0.apk
+          retention-days: 14
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        with:
+          files: |
+            Muzahid-GPS-Activator-VIP.apk
+            MUZAHID GPS_2.0.0.apk
+          tag_name: "v1.0.0-build-${{ github.run_number }}"
+          name: "MUZAHID GPS VIP Activator v1.0.0 (Build #${{ github.run_number }})"
+          body: |
+            نسخة موديول التفعيل المستقل لتطبيق MUZAHID GPS (VIP):
+            - موديول مستقل 100% يعمل على Modern LibXposed (API 102).
+            - تخطي نافذة التنبيه الأصلية الخاصة بـ Xposed نهائياً.
+            - تخطي نافذة طلب المفتاح (License Key Dialog) والتفعيل الدائم كـ VIP.
+            - تخطي فحص الوقت التلقائي وفحوصات النزاهة.
+            - يتضمن التطبيق الأصلي MUZAHID GPS_2.0.0.apk جاهزاً للتحميل.

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+        <package android:name="com.muzahid.gps" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="MUZAHID GPS VIP Activator"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <!-- Modern LibXposed Provider (Used by LSPosed for SendBinder & IPC) -->
+        <provider
+            android:name="io.github.libxposed.service.XposedProvider"
+            android:authorities="dev.muzahid.activator.XposedService"
+            android:exported="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
